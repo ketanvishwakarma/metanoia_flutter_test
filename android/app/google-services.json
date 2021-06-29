@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1044022967891",
+    "project_id": "metanoiafluttertest",
+    "storage_bucket": "metanoiafluttertest.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044022967891:android:b48053cbaa4cb5df5010a6",
+        "android_client_info": {
+          "package_name": "com.kdevigner.metanoia_flutter_test"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1044022967891-78grn5ligr1dldmatf94k2slgf9u1ia2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kdevigner.metanoia_flutter_test",
+            "certificate_hash": "57889d43701e5afc1b2a33e0485d0e92726d7c7d"
+          }
+        },
+        {
+          "client_id": "1044022967891-kskvnisuqmhan5grtdttrtg9s69vg00l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhV0titZAnEbIBM4RWx9gcQCUDr0a_VKQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1044022967891-kskvnisuqmhan5grtdttrtg9s69vg00l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

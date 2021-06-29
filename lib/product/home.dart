@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -9,6 +7,7 @@ import 'package:metanoia_flutter_test/product/cartmodel.dart';
 import 'package:metanoia_flutter_test/product/productmodel.dart';
 import 'package:metanoia_flutter_test/singnUpLogIn/authentication_service.dart';
 import 'package:metanoia_flutter_test/user/user_profile.dart';
+import 'package:metanoia_flutter_test/user/usermodel.dart';
 import 'package:provider/provider.dart';
 
 CartModel _cart = new CartModel();
@@ -25,18 +24,7 @@ class _HomeState extends State<Home> {
   String dropdown = 'All';
   String imgStarbucks = '', imgMap = '', imgIce = '', imgProduct = '';
 
-  getProducts() async {
-    await FirebaseFirestore.instance.collection('products').get().then((value) {
-      productList.clear();
-      value.docs.forEach((element) {
-        Product _product = new Product(element.id, element.get('name'),
-            element.get('numOfOrder'), element.get('price'));
-        productList.add(_product);
-      });
-      setState(() {});
-    });
-  }
-
+  //loaded Images From Database
   loadImages() {
     FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
     _firebaseStorage = FirebaseStorage.instance;
@@ -76,7 +64,12 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    getProducts();
+    //Fetch Products
+    ProductDatabaseService().getProducts().then((value) {
+      setState(() {
+        productList = value;
+      });
+    });
     loadImages();
     super.initState();
   }
@@ -92,232 +85,138 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.read<AuthenticationService>().firebaseAuth;
+
+    //Cart Update Checker
     _cart.addListener(() {
       setState(() {});
     });
+
     return Scaffold(
         body: SafeArea(
-      child: CustomScrollView(
-        shrinkWrap: true,
-        slivers: [
-          SliverList(
-            delegate: SliverChildListDelegate.fixed([
-              getBanner(),
-              Padding(
-                padding: getPadding(),
-                child: getShopDetails(),
-              ),
-              Divider(
-                thickness: 5,
-              ),
-              Padding(
-                padding: getPadding(),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            color: Colors.black12,
-                            borderRadius: BorderRadius.circular(14)),
-                        child: Icon(
-                          Icons.people_alt_outlined,
-                          color: Colors.black38,
-                          size: 20,
-                        )),
-                    SizedBox(width: 10),
-                    Flexible(
+      child: auth.currentUser!.emailVerified == false && auth.currentUser!.email != ''
+          ? AlertDialog(
+              content: Text(
+                  'We have sent you a email verification link, Please verify your email. Then again login'),
+              actions: [
+                SizedBox(
+                  height: 30,
+                  width: 80,
+                  child: gradientBorderButton('Ok', () {
+                    auth.signOut();
+                  }),
+                )
+              ],
+            )
+          : CustomScrollView(
+              shrinkWrap: true,
+              slivers: [
+                SliverList(
+                  delegate: SliverChildListDelegate.fixed([
+                    getBanner(),
+                    Padding(
+                      padding: getPadding(),
+                      child: getShopDetails(),
+                    ),
+                    Divider(
+                      thickness: 5,
+                    ),
+                    Padding(
+                      padding: getPadding(),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  color: Colors.black12,
+                                  borderRadius: BorderRadius.circular(14)),
+                              child: Icon(
+                                Icons.people_alt_outlined,
+                                color: Colors.black38,
+                                size: 20,
+                              )),
+                          SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              '2990+ orders placed to make people smile',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(
+                      thickness: 5,
+                    ),
+                    Padding(
+                      padding: getPadding(),
+                      child: Text('Promotion',
+                          style: Theme.of(context).textTheme.headline5),
+                    ),
+                    getHorizontalProduct(),
+                    Padding(
+                      padding: EdgeInsets.only(left: 30, top: 30),
                       child: Text(
-                        '2990+ orders placed to make people smile',
+                        'Menu',
+                        style: Theme.of(context).textTheme.headline5,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Divider(
-                thickness: 5,
-              ),
-              Padding(
-                padding: getPadding(),
-                child: Text('Promotion',
-                    style: Theme.of(context).textTheme.headline5),
-              ),
-              getHorizontalProduct(),
-              Padding(
-                padding: EdgeInsets.only(left: 30, top: 30),
-                child: Text(
-                  'Menu',
-                  style: Theme.of(context).textTheme.headline5,
-                ),
-              ),
-              Padding(
-                padding: getPadding(),
-                child: Container(
-                  height: 35,
-                  alignment: Alignment.topLeft,
-                  child: gradientBorder(
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        hint: Text(dropdown),
-                        items: <String>['All', 'A', 'B', 'C', 'D']
-                            .map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          dropdown = value!;
-                          setState(() {});
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 20, right: 20),
-                child: productList.length > 0
-                    ? GridView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75,
+                    Padding(
+                      padding: getPadding(),
+                      child: Container(
+                        height: 35,
+                        alignment: Alignment.topLeft,
+                        child: gradientBorder(
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              hint: Text(dropdown),
+                              items: <String>['All', 'A', 'B', 'C', 'D']
+                                  .map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                dropdown = value!;
+                                setState(() {});
+                              },
+                            ),
+                          ),
                         ),
-                        itemBuilder: (context, index) {
-                          return beautifulCard(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(8),
-                                          topRight: Radius.circular(8)),
-                                      child: Stack(
-                                          fit: StackFit.loose,
-                                          alignment: Alignment.topLeft,
-                                          children: <Widget>[
-                                            imgProduct != ''
-                                                ? Image.network(
-                                                    imgProduct,
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : Image.asset(
-                                                    'assets/loading.jpg'),
-                                            Container(
-                                              margin: EdgeInsets.only(top: 20),
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                  color: Color.fromRGBO(
-                                                      218, 181, 147, 1),
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                          topRight:
-                                                              Radius.circular(
-                                                                  4),
-                                                          bottomRight:
-                                                              Radius.circular(
-                                                                  4))),
-                                              child: Text(
-                                                'Popular',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .subtitle2!
-                                                    .copyWith(
-                                                        color: Colors.white),
-                                              ),
-                                            )
-                                          ]),
-                                    ),
-                                  ),
-                                  Expanded(
-                                      child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          productList[index]
-                                                  .numOfOrder
-                                                  .toString() +
-                                              '+ Ordered',
-                                        ),
-                                        Text(
-                                          productList[index].name,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline5,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                                '\$' +
-                                                    productList[index]
-                                                        .price
-                                                        .toString(),
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headline5),
-                                            SizedBox(
-                                                height: 30,
-                                                child: checkAlreadyAddedToCart(
-                                                        productList[index])
-                                                    ? gradientBorderButton(
-                                                        'Add More', () {
-                                                        _cart.add(
-                                                            productList[index]);
-                                                      })
-                                                    : gradientButton('Add', () {
-                                                        _cart.add(
-                                                            productList[index]);
-                                                      }))
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  )),
-                                ],
-                              ),
-                              EdgeInsets.all(10));
-                        },
-                        itemCount: productList.length,
-                      )
-                    : Center(child: CircularProgressIndicator()),
-              ),
-              Container(
-                decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: Offset.fromDirection(
-                        4.7,
-                      ))
-                ]),
-                height: 100,
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                child: gradientButton(
-                  'Checkout - \$' + _cart.totalPrice().toString(),
-                  () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ShoppingCart(),
-                      )),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20, right: 20),
+                      child: productGrid(),
+                    ),
+                    Container(
+                      decoration:
+                          BoxDecoration(color: Colors.white, boxShadow: [
+                        BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 20,
+                            spreadRadius: 0,
+                            offset: Offset.fromDirection(
+                              4.7,
+                            ))
+                      ]),
+                      height: 100,
+                      width: double.infinity,
+                      padding: EdgeInsets.all(20),
+                      child: gradientButton(
+                        'Checkout - \$' + _cart.totalPrice().toString(),
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ShoppingCart(),
+                            )),
+                      ),
+                    ),
+                  ]),
                 ),
-              ),
-            ]),
-          ),
-        ],
-      ),
+              ],
+            ),
     ));
   }
 
@@ -470,6 +369,122 @@ class _HomeState extends State<Home> {
       ),
     );
   }
+
+  Widget productGrid() {
+    return productList.length > 0
+        ? GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+            ),
+            itemBuilder: (context, index) {
+              return beautifulCard(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8)),
+                          child: Stack(
+                              fit: StackFit.loose,
+                              alignment: Alignment.topLeft,
+                              children: <Widget>[
+                                imgProduct != ''
+                                    ? Image.network(
+                                        imgProduct,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.asset('assets/loading.jpg'),
+                                Container(
+                                  margin: EdgeInsets.only(top: 20),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 4),
+                                  decoration: BoxDecoration(
+                                      color: Color.fromRGBO(218, 181, 147, 1),
+                                      borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(4),
+                                          bottomRight: Radius.circular(4))),
+                                  child: Text(
+                                    'Popular',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .subtitle2!
+                                        .copyWith(color: Colors.white),
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: likeButton(productList[index]),
+                                ),
+                              ]),
+                        ),
+                      ),
+                      Expanded(
+                          child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              productList[index].numOfOrder.toString() +
+                                  '+ Ordered',
+                            ),
+                            Text(
+                              productList[index].name,
+                              style: Theme.of(context).textTheme.headline5,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('\$' + productList[index].price.toString(),
+                                    style:
+                                        Theme.of(context).textTheme.headline5),
+                                SizedBox(
+                                    height: 30,
+                                    child: checkAlreadyAddedToCart(
+                                            productList[index])
+                                        ? gradientBorderButton('Add More', () {
+                                            _cart.add(productList[index]);
+                                          })
+                                        : gradientButton('Add', () {
+                                            _cart.add(productList[index]);
+                                          }))
+                              ],
+                            ),
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                  EdgeInsets.all(10));
+            },
+            itemCount: productList.length,
+          )
+        : Center(child: CircularProgressIndicator());
+  }
+
+  //LikeDislike
+  Widget likeButton(Product product) {
+    final user = context.watch<MyUser?>();
+    bool liked = product.like.contains(user!.uid);
+    return IconButton(
+        icon: Icon(
+          Icons.favorite,
+          color: liked ? Colors.redAccent : Colors.grey,
+          size: 30,
+        ),
+        onPressed: () async {
+          setState(() {
+            liked ? product.like.remove(user.uid) : product.like.add(user.uid);
+            ProductDatabaseService().updateLike(product.id, product.like);
+          });
+        });
+  }
 }
 
 class ShoppingCart extends StatelessWidget {
@@ -493,7 +508,11 @@ class ShoppingCart extends StatelessWidget {
                 Icons.person,
               ),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfile(),));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserProfile(),
+                    ));
               }),
         ],
       ),

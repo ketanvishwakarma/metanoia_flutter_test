@@ -70,10 +70,10 @@ Future show(context, String msg) {
       return AlertDialog(
         content: Text(msg),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Ok'),
-          )
+          SizedBox(
+              height: 30,
+              width: 80,
+              child: gradientBorderButton('Ok', () => Navigator.pop(context)))
         ],
       );
     },
@@ -102,7 +102,7 @@ Future<bool> checkConnection() async {
   }
 }
 
-Widget beautifulCard(Widget child,margin) {
+Widget beautifulCard(Widget child, margin) {
   return Container(
     alignment: Alignment.center,
     margin: margin,

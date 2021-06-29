@@ -20,7 +20,6 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
 
   @override
   Widget build(BuildContext context) {
-
     //check which login option to show
     context.read<AuthenticationService>().addListener(() {
       setState(() {

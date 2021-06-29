@@ -83,7 +83,9 @@ class _LoginPhoneState extends State<LoginPhone> {
                         if (hasConnection) {
                           if (_phoneController.text.length == 13)
                             _authService
-                                .submitPhoneNumber(_phoneController.text);
+                                .submitPhoneNumber(_phoneController.text).then((value) {
+
+                            });
                           else
                             show(context, 'Please Enter Valid Phone Number');
                         } else
@@ -97,7 +99,13 @@ class _LoginPhoneState extends State<LoginPhone> {
                         else
                           show(context, 'No Internet');
                       }),
-                    )
+                    ),
+              SizedBox(height: 20,),
+              GestureDetector(
+                  onTap: () {
+                      _authService.changePage('');
+                  },
+                  child: Text('Sign In With Email or Google'),)
             ],
           ),
         ),

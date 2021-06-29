@@ -39,6 +39,7 @@ class CartModel extends ChangeNotifier {
     if (cartProduct.quantity == 1) productCartItems.add(cartProduct);
     notifyListeners();
   }
+
   void removeAll() {
     productCartItems.clear();
     notifyListeners();

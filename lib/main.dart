@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:metanoia_flutter_test/singnUpLogIn/authentication_service.dart';
 import 'package:metanoia_flutter_test/singnUpLogIn/authentication_wrapper.dart';
@@ -22,7 +21,6 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<AuthenticationService>(
             create: (_) => AuthenticationService(FirebaseAuth.instance),
           ),
-
           //Check user login logout
           StreamProvider<MyUser?>(
               create: (context) =>
@@ -36,10 +34,22 @@ class MyApp extends StatelessWidget {
               primaryColor: Colors.white,
               scaffoldBackgroundColor: Colors.white,
               textTheme: GoogleFonts.ralewayTextTheme().copyWith(
-                  headline4: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.black54),
-                  headline5: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black54),
-                  subtitle1: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black45),
-                  subtitle2: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black45),
+                headline4: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black54),
+                headline5: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black54),
+                subtitle1: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black45),
+                subtitle2: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black45),
                 bodyText1: TextStyle(fontSize: 18, color: Colors.black45),
                 bodyText2: TextStyle(fontSize: 14, color: Colors.black45),
               )),

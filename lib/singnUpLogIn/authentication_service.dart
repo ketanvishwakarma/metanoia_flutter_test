@@ -6,16 +6,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:metanoia_flutter_test/user/usermodel.dart';
 
 class AuthenticationService with ChangeNotifier {
-  final FirebaseAuth _firebaseAuth;
+  final FirebaseAuth firebaseAuth;
   PhoneAuthCredential? _phoneAuthCredential;
   String? verificationId, status = '', authPage = '', error = '';
 
   //user's sign-in state notifier.
-  Stream<MyUser?> get authStateChanges => _firebaseAuth
+  Stream<MyUser?> get authStateChanges => firebaseAuth
       .authStateChanges()
       .map((user) => _userFromFirebaseUser(user));
 
-  AuthenticationService(this._firebaseAuth);
+  AuthenticationService(this.firebaseAuth);
 
   MyUser? _userFromFirebaseUser(User? user) {
     if (user != null) return MyUser(uid: user.uid);
@@ -25,7 +25,7 @@ class AuthenticationService with ChangeNotifier {
   //Email SignIn
   Future<void> signInWithEmail(
       {required String email, required String password}) async {
-    _firebaseAuth
+    firebaseAuth
         .signInWithEmailAndPassword(email: email, password: password)
         .then((value) {
       if (value.user!.emailVerified == false)
@@ -39,14 +39,14 @@ class AuthenticationService with ChangeNotifier {
   }
 
   Future<void> signUpWithEmail({String? email, String? password}) async {
-    _firebaseAuth
+    firebaseAuth
         .createUserWithEmailAndPassword(email: email!, password: password!)
         .then((value) {
       value.user!.sendEmailVerification();
       error = '';
       notifyListeners();
       //Create New user in Firestore
-      UserDatabaseService(uid: _firebaseAuth.currentUser!.uid)
+      UserDatabaseService(uid: firebaseAuth.currentUser!.uid)
           .updateUserData('', '');
     }).onError((FirebaseAuthException e, stackTrace) {
       error = e.message;
@@ -60,11 +60,13 @@ class AuthenticationService with ChangeNotifier {
     Future<void> verificationCompleted(
         PhoneAuthCredential phoneAuthCredential) async {
       this._phoneAuthCredential = phoneAuthCredential;
-      await _firebaseAuth
+      await firebaseAuth
           .signInWithCredential(_phoneAuthCredential!)
           .then((value) {
         //Create New user in Firestore
-        UserDatabaseService(uid: _firebaseAuth.currentUser!.uid).updateUserData('','');
+        UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
+          UserDatabaseService(uid: value.uid).updateUserData(value.name ?? '', value.age ?? '');
+        });
         error = '';
         notifyListeners();
       }).onError((FirebaseAuthException e, stackTrace) {
@@ -88,7 +90,7 @@ class AuthenticationService with ChangeNotifier {
       //print('codeAutoRetrievalTimeout');
     }
 
-    await _firebaseAuth.verifyPhoneNumber(
+    await firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       timeout: Duration(seconds: 30),
       verificationCompleted: verificationCompleted,
@@ -101,13 +103,15 @@ class AuthenticationService with ChangeNotifier {
   Future<void> submitOTP(String smsCode) async {
     this._phoneAuthCredential = PhoneAuthProvider.credential(
         verificationId: verificationId!, smsCode: smsCode);
-    _firebaseAuth.signInWithCredential(_phoneAuthCredential!).then((value) {
+    firebaseAuth.signInWithCredential(_phoneAuthCredential!).then((value) {
       status = 'Login';
       error = '';
       notifyListeners();
 
-      //Create New user in Firestore
-      UserDatabaseService(uid: _firebaseAuth.currentUser!.uid).updateUserData('','');
+      //Create if new user
+      UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
+        UserDatabaseService(uid: value.uid).updateUserData(value.name ?? '', value.age ?? '');
+      });
     }).onError((FirebaseAuthException e, stackTrace) {
       error = e.message;
       notifyListeners();
@@ -116,18 +120,18 @@ class AuthenticationService with ChangeNotifier {
 
   Future<void> signOut() async {
     await googleSignIn.signOut();
-    await _firebaseAuth.signOut();
+    await firebaseAuth.signOut();
   }
 
   changePage(String title) {
     authPage = title;
     notifyListeners();
   }
-
   //GoogleSignIn
   final googleSignIn = GoogleSignIn();
 
   GoogleSignInAccount? gUser;
+
   Future googleLogin() async {
     final googleUser = await googleSignIn.signIn();
     if (googleUser != null) {
@@ -135,11 +139,14 @@ class AuthenticationService with ChangeNotifier {
       final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
 
-      _firebaseAuth.signInWithCredential(credential).then((value) {
+      firebaseAuth.signInWithCredential(credential).then((value) {
         error = '';
         notifyListeners();
         //Create New user in Firestore
-        UserDatabaseService(uid: _firebaseAuth.currentUser!.uid).updateUserData(_firebaseAuth.currentUser!.displayName!,'');
+
+        UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
+          UserDatabaseService(uid: value.uid).updateUserData(value.name ?? firebaseAuth.currentUser!.displayName!, value.age ?? '');
+        });
 
         if (value.user!.emailVerified != true)
           value.user!.sendEmailVerification();
@@ -151,4 +158,5 @@ class AuthenticationService with ChangeNotifier {
       );
     }
   }
+
 }

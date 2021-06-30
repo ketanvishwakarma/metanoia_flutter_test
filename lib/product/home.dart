@@ -87,6 +87,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final auth = context.read<AuthenticationService>().firebaseAuth;
 
+    String _email = auth.currentUser!.email ?? '';
     //Cart Update Checker
     _cart.addListener(() {
       setState(() {});
@@ -94,7 +95,7 @@ class _HomeState extends State<Home> {
 
     return Scaffold(
         body: SafeArea(
-      child: auth.currentUser!.emailVerified == false && auth.currentUser!.email == ''
+      child: auth.currentUser!.emailVerified == false && _email != ''
           ? AlertDialog(
               content: Text(
                   'We have sent you a email verification link, Please verify your email. Then again login'),

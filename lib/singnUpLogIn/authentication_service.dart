@@ -6,7 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:metanoia_flutter_test/user/usermodel.dart';
 
 class AuthenticationService with ChangeNotifier {
-  final FirebaseAuth firebaseAuth;
+  FirebaseAuth firebaseAuth;
   PhoneAuthCredential? _phoneAuthCredential;
   String? verificationId, status = '', authPage = '', error = '';
 

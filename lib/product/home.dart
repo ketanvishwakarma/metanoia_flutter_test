@@ -94,7 +94,7 @@ class _HomeState extends State<Home> {
 
     return Scaffold(
         body: SafeArea(
-      child: auth.currentUser!.emailVerified == false && auth.currentUser!.email != ''
+      child: auth.currentUser!.emailVerified == false && auth.currentUser!.email == ''
           ? AlertDialog(
               content: Text(
                   'We have sent you a email verification link, Please verify your email. Then again login'),

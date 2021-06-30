@@ -66,6 +66,8 @@ class AuthenticationService with ChangeNotifier {
         //Create New user in Firestore
         UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
           UserDatabaseService(uid: value.uid).updateUserData(value.name ?? '', value.age ?? '');
+        }).catchError((e){
+          UserDatabaseService(uid: value.user!.uid).updateUserData('','');
         });
         error = '';
         notifyListeners();
@@ -109,8 +111,11 @@ class AuthenticationService with ChangeNotifier {
       notifyListeners();
 
       //Create if new user
+      //Create New user in Firestore
       UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
         UserDatabaseService(uid: value.uid).updateUserData(value.name ?? '', value.age ?? '');
+      }).catchError((e){
+        UserDatabaseService(uid: value.user!.uid).updateUserData('','');
       });
     }).onError((FirebaseAuthException e, stackTrace) {
       error = e.message;
@@ -142,10 +147,12 @@ class AuthenticationService with ChangeNotifier {
       firebaseAuth.signInWithCredential(credential).then((value) {
         error = '';
         notifyListeners();
-        //Create New user in Firestore
 
+        //Create New user in Firestore
         UserDatabaseService(uid: value.user!.uid).getUserData.first.then((value) {
-          UserDatabaseService(uid: value.uid).updateUserData(value.name ?? firebaseAuth.currentUser!.displayName!, value.age ?? '');
+          UserDatabaseService(uid: value.uid).updateUserData(value.name ?? '', value.age ?? '');
+        }).catchError((e){
+          UserDatabaseService(uid: value.user!.uid).updateUserData('','');
         });
 
         if (value.user!.emailVerified != true)
